@@ -1,8 +1,8 @@
 mappings:
   movie_title:
-    faker: text
+    faker: sentence
     kwargs:
-      max_nb_chars: 50
+      nb_words: 4
   director:
     faker: name
   main_actor:

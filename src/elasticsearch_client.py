@@ -74,7 +74,6 @@ class ElasticsearchClient:
         self.es = self.connect_to_elastic()
 
     @handle_elasticsearch_errors
-    @handle_elasticsearch_errors
     def connect_to_elastic(self):
         url = f"{self.config['host']}:{self.config['port']}"
 
@@ -262,29 +261,6 @@ class ElasticsearchClient:
         )
 
         logger.info(str(response))
-
-        return True
-
-    @handle_elasticsearch_errors
-    def delete_index(self, index_name: str):
-        """
-        Deletes an entire Elasticsearch index.
-
-        Warning:
-        This removes all documents inside the index.
-
-        Elasticsearch API:
-
-        DELETE /index_name
-        """
-
-        self.es.indices.delete(
-            index=index_name
-        )
-
-        logger.info(
-            f'Deleted index {index_name}'
-        )
 
         return True
 
@@ -513,3 +489,50 @@ class ElasticsearchClient:
             f"Bulk insert {str(response)} documents "
             f"to {index_name} index"
         )
+
+    @handle_elasticsearch_errors
+    def search_and_save_results(self, query: dict, index_name: str, result_index_name: str = None):
+        """
+        Search documents and save results to a new index for Kibana visualization.
+
+        Args:
+            query: Elasticsearch query
+            index_name: Source index to search in
+            result_index_name: Name of the new index to save results (default: source_index_results)
+
+        Returns:
+            Number of documents saved
+        """
+
+        # اگه اسم ایندکس نتیجه رو ندادی، خودکار بساز
+        if result_index_name is None:
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            result_index_name = f"{index_name}_results_{timestamp}"
+
+        # اول search کن
+        results = self.search(query=query, index_name=index_name)
+
+        if not results:
+            logger.warning("No results to save!")
+            return 0
+
+        # نتایج رو برای bulk insert آماده کن
+        documents = [hit['_source'] for hit in results]
+
+        # ایندکس جدید رو بساز (اگر وجود نداره)
+        if not self.es.indices.exists(index=result_index_name):
+            # از mapping ایندکس اصلی کپی می‌کنه
+            original_mapping = self.es.indices.get_mapping(index=index_name)
+            self.es.indices.create(
+                index=result_index_name,
+                body=original_mapping[index_name]
+            )
+            logger.info(f"Created new index: {result_index_name}")
+
+        # نتایج رو bulk insert کن
+        self.bulk_index_documents(result_index_name, documents)
+
+        logger.info(f"Saved {len(documents)} documents to {result_index_name}")
+
+        return result_index_name
