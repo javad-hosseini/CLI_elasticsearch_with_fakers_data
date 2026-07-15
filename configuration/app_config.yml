@@ -1,0 +1,10 @@
+elasticsearch:
+  host: http://localhost
+  port: 9200
+#  username: elastic
+#  password: 6fX0s0E23oIeF4BGkYY9
+
+logger:
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  level: INFO
+

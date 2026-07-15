@@ -1,0 +1,37 @@
+mappings:
+  movie_title:
+    faker: text
+    kwargs:
+      max_nb_chars: 50
+  director:
+    faker: name
+  main_actor:
+    faker: name
+  genre:
+    faker: random_element
+    kwargs:
+      elements:
+        - Action
+        - Comedy
+        - Drama
+        - Horror
+        - Romance
+        - Thriller
+        - Science Fiction
+        - Adventure
+        - Fantasy
+  release_date:
+    faker: date_between
+    kwargs:
+      start_date: '-20y'
+      end_date: 'now'
+  users_rating:
+    faker: random_int
+    kwargs:
+      min: 1
+      max: 10
+  imdb_rating:
+    faker: random_int
+    kwargs:
+      min: 1
+      max: 10
